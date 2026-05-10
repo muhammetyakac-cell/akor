@@ -5,15 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 dotenv.config({ path: '.env.local' });
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
-const createSlug = (t) => {
-  if (!t) return "";
-  return t.toString().toLowerCase()
-    .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
-    .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
-    .replace(/\s+/g,'-')
-    .replace(/[^a-z0-9-]/g,'')
-    .replace(/-+/g, '-');
-};
+const createSlug = (t) => t.toLowerCase()
+  .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
+  .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
+  .replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -252,15 +247,16 @@ const TARGET_URLS = [
 async function startMultiTargetScraping(urls) {
   console.log(`\n🚀 TOPLU TARAMA BAŞLADI (${urls.length} hedef sayfa)`);
   
-  // Sadece akoru da olanları "var" sayıyoruz. 10.000 kayıt çekiyoruz.
-  const { data: existingSongs } = await supabase.from('songs').select('slug, artists(slug), chords(id)').range(0, 10000);
+  // 1. ADIM: Sadece şarkısı VE AKORU olanları çek ki eksik akorları tamamlayalım
+  const { data: existingSongs } = await supabase.from('songs').select('slug, artists(slug), chords(id)').range(0, 5000);
   
+  // Sadece akoru da olanları "var" sayıyoruz. Akoru yoksa tekrar tarasın.
   const existingCombos = new Set(
     existingSongs?.filter(s => s.chords && s.chords.length > 0)
       .map(s => `${s.artists?.slug}:${s.slug}`) || []
   );
   
-  console.log(`💡 Hafızada ${existingCombos.size} TAM KAYITLI (Akorlu) şarkı var.`);
+  console.log(`💡 Hafızada ${existingCombos.size} tam kayıtlı şarkı var.`);
 
   const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
@@ -293,7 +289,7 @@ async function startMultiTargetScraping(urls) {
           } else {
             console.log(`   [${i + 1}/${uniqueLinks.length}] ⏩ ATLANDI: Zaten tam kayıtlı.`);
           }
-          await delay(100); 
+          await delay(400); 
         } catch (err) {
           console.error(`   ❌ Hata (${url}):`, err.message);
         }
@@ -323,15 +319,12 @@ async function scrapeSingleSong(page, url, existingCombos) {
   }
 
   const aSlug = createSlug(res.artist);
-  const rawSongSlug = createSlug(res.title);
-  
-  // ÇAKIŞMA ÖNLEYİCİ: Sanatçı-Şarkı slug'ını birleştiriyoruz (Örn: duman-belki-alisman-lazim)
-  const sSlug = `${aSlug}-${rawSongSlug}`;
+  const sSlug = createSlug(res.title);
   const comboKey = `${aSlug}:${sSlug}`;
 
   if (existingCombos.has(comboKey)) return null;
 
-  // 1. SANATÇI
+  // 1. Sanatçı
   let { data: dbArt, error: artErr } = await supabase.from('artists').select('id').eq('slug', aSlug).maybeSingle();
   if (artErr) console.error("   ❌ Artist sorgu hatası:", artErr.message);
   
@@ -341,33 +334,18 @@ async function scrapeSingleSong(page, url, existingCombos) {
     dbArt = data;
   }
 
-  if (!dbArt) return null;
-
-  // 2. ŞARKI
-  let { data: song, error: sngErr } = await supabase.from('songs').select('id').eq('slug', sSlug).maybeSingle();
+  // 2. Şarkı
+  let { data: song, error: sngErr } = await supabase.from('songs').select('id').eq('slug', sSlug).eq('artist_id', dbArt.id).maybeSingle();
   if (sngErr) console.error("   ❌ Şarkı sorgu hatası:", sngErr.message);
 
   if (!song) {
     const { data, error } = await supabase.from('songs').insert([{ artist_id: dbArt.id, title: res.title, slug: sSlug }]).select().maybeSingle();
-    if (error) { 
-        // Duplicate yakalarsak mevcut olanı çek
-        if (error.code === '23505') {
-            const { data: retry } = await supabase.from('songs').select('id').eq('slug', sSlug).single();
-            song = retry;
-        } else {
-            console.error("   ❌ Şarkı ekleme hatası:", error.message); 
-            return null; 
-        }
-    } else {
-        song = data;
-    }
+    if (error) { console.error("   ❌ Şarkı ekleme hatası:", error.message); return null; }
+    song = data;
   }
 
-  if (!song) return null;
-
-  // 3. AKOR KAYDI (Kesin Yöntem: Varsa sil, sonra ekle)
-  await supabase.from('chords').delete().eq('song_id', song.id);
-  const { error: chordErr } = await supabase.from('chords').insert([{ song_id: song.id, content: res.chords }]);
+  // 3. Akor Kaydı (EN ÖNEMLİ KISIM)
+  const { error: chordErr } = await supabase.from('chords').upsert({ song_id: song.id, content: res.chords }, { onConflict: 'song_id' });
   
   if (chordErr) {
     console.error("   ❌ AKOR KAYDEDİLEMEDİ! Sebeb:", chordErr.message);
