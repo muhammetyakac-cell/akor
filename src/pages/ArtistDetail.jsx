@@ -1,7 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Music } from 'lucide-react';
+import { setPageSeo } from '../lib/seo';
 
 export default function ArtistDetail() {
   const { slug } = useParams();
@@ -20,6 +21,11 @@ export default function ArtistDetail() {
 
       if (artData) {
         setArtist(artData);
+        setPageSeo({
+          title: `${artData.name} Akorları | AKOR`,
+          description: `${artData.name} şarkı akorlarını listele, favorilerine ekle ve çalma modunda pratik yap.`,
+          canonicalPath: `/artist/${artData.slug}`,
+        });
         // Sonra o sanatçıya ait şarkıları çek
         const { data: sngData } = await supabase
           .from('songs')
@@ -28,6 +34,12 @@ export default function ArtistDetail() {
           .order('title', { ascending: true });
         
         setSongs(sngData || []);
+      } else {
+        setPageSeo({
+          title: 'Sanatçı bulunamadı | AKOR',
+          description: 'Aradığın sanatçı bulunamadı. Sanatçılar listesinden yeni bir müzisyen seçebilirsin.',
+          canonicalPath: `/artist/${slug}`,
+        });
       }
       setLoading(false);
     }

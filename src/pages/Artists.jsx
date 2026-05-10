@@ -1,13 +1,20 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
+import { setPageSeo } from '../lib/seo';
 
 export default function Artists() {
   const [artists, setArtists] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setPageSeo({
+      title: 'Sanatçılar | AKOR',
+      description: 'AKOR kütüphanesindeki sanatçıları keşfet ve sevdiğin müzisyenlerin şarkı akorlarına hızlıca ulaş.',
+      canonicalPath: '/artists',
+    });
+
     async function fetchArtists() {
       const { data, error } = await supabase
         .from('artists')

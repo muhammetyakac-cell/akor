@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
-import { Clock, Heart, Loader2, Music, Search, Sparkles, X } from 'lucide-react';
+import { Clock, Heart, Inbox, Loader2, Music, Search, Send, Sparkles, X } from 'lucide-react';
+import { setPageSeo } from '../lib/seo';
 
 const FAVORITES_KEY = 'akor:favorites';
 const RECENT_KEY = 'akor:recentSongs';
+const REQUESTS_KEY = 'akor:songRequests';
 const QUICK_SEARCH_TERMS = ['Sezen Aksu', 'Kolay akor', 'Popüler', 'Akustik'];
 
 const getStoredSongs = (key) => {
@@ -20,6 +22,11 @@ const getStoredSongs = (key) => {
 };
 
 const getSongArtist = (song) => song.artists?.name || song.artist || 'Bilinmeyen sanatçı';
+
+const saveLocalRequest = (request) => {
+  const previousRequests = getStoredSongs(REQUESTS_KEY);
+  window.localStorage.setItem(REQUESTS_KEY, JSON.stringify([request, ...previousRequests].slice(0, 30)));
+};
 
 function SongCard({ song, index, colorSchemes, favoriteSongs, onToggleFavorite }) {
   const scheme = colorSchemes[index % colorSchemes.length];
@@ -84,6 +91,113 @@ function MiniSongList({ title, icon, items, emptyText }) {
   );
 }
 
+function SongRequestForm({ initialQuery, onSubmitRequest }) {
+  const [songTitle, setSongTitle] = useState(initialQuery);
+  const [artistName, setArtistName] = useState('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!songTitle.trim()) return;
+
+    setSubmitting(true);
+    setFeedback(null);
+
+    const result = await onSubmitRequest({
+      songTitle: songTitle.trim(),
+      artistName: artistName.trim(),
+      note: note.trim(),
+    });
+
+    setSubmitting(false);
+    setFeedback(result);
+
+    if (result.ok) {
+      setSongTitle('');
+      setArtistName('');
+      setNote('');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-8 rounded-[2rem] border border-blue-100 bg-blue-50/70 p-5 text-left">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="rounded-2xl bg-white p-3 text-blue-600 shadow-sm">
+          <Inbox size={22} />
+        </div>
+        <div>
+          <h4 className="text-lg font-black text-gray-900">Bulamadığın şarkıyı iste</h4>
+          <p className="text-sm font-medium text-gray-500">İsteğini kaydedelim; yeni akor eklerken öncelik verelim.</p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="grid gap-1 text-sm font-bold text-gray-600">
+          Şarkı adı
+          <input
+            type="text"
+            value={songTitle}
+            onChange={(event) => setSongTitle(event.target.value)}
+            placeholder="Örn. Gülpembe"
+            className="rounded-2xl border border-white bg-white px-4 py-3 font-medium text-gray-800 outline-none transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+            required
+          />
+        </label>
+        <label className="grid gap-1 text-sm font-bold text-gray-600">
+          Sanatçı
+          <input
+            type="text"
+            value={artistName}
+            onChange={(event) => setArtistName(event.target.value)}
+            placeholder="Örn. Barış Manço"
+            className="rounded-2xl border border-white bg-white px-4 py-3 font-medium text-gray-800 outline-none transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+          />
+        </label>
+      </div>
+
+      <label className="mt-3 grid gap-1 text-sm font-bold text-gray-600">
+        Not / ton isteği
+        <textarea
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+          placeholder="Varsa ton, capo veya versiyon notunu yazabilirsin."
+          className="min-h-24 rounded-2xl border border-white bg-white px-4 py-3 font-medium text-gray-800 outline-none transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+        />
+      </label>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {feedback ? (
+          <p className={`text-sm font-bold ${feedback.ok ? 'text-emerald-600' : 'text-amber-600'}`}>{feedback.message}</p>
+        ) : <span />}
+        <button
+          type="submit"
+          disabled={submitting || !songTitle.trim()}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 font-black text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+          İstek gönder
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function LoadingGrid() {
+  return (
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <div key={index} className="aspect-square animate-pulse rounded-[2rem] border border-blue-50 bg-white/70 p-6">
+          <div className="mx-auto mb-5 h-9 w-9 rounded-full bg-blue-100" />
+          <div className="mx-auto mb-3 h-5 w-3/4 rounded-full bg-blue-100" />
+          <div className="mx-auto h-4 w-1/2 rounded-full bg-blue-50" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [songs, setSongs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,7 +224,6 @@ export default function Home() {
     setRecentSongs(getStoredSongs(RECENT_KEY));
   };
 
-  // Arama Mantığı (Backend)
   const performSearch = async (term) => {
     const cleanTerm = term.trim();
     setLoading(true);
@@ -118,7 +231,6 @@ export default function Home() {
 
     try {
       if (!cleanTerm) {
-        // Arama kutusu boşsa, tıklanma sayısına göre ilk 50 popüler şarkıyı getir
         const { data, error } = await supabase
           .from('songs')
           .select('*, artists(name)')
@@ -130,7 +242,6 @@ export default function Home() {
         return;
       }
 
-      // Arama kutusu doluysa: Supabase .or hatasını önlemek için iki temiz sorgu atıyoruz
       const [{ data: titleMatch, error: titleError }, { data: artistMatch, error: artistError }] = await Promise.all([
         supabase
           .from('songs')
@@ -146,7 +257,6 @@ export default function Home() {
 
       if (titleError || artistError) throw titleError || artistError;
 
-      // Gelen sonuçları birleştir ve çift olanları temizle
       const mergedResults = [...(titleMatch || []), ...(artistMatch || [])];
       const uniqueSongs = Array.from(new Map(mergedResults.map((item) => [item.id, item])).values());
 
@@ -160,7 +270,16 @@ export default function Home() {
     }
   };
 
-  // Kullanıcı yazarken otomatik ara (Yazmayı bırakınca 300ms sonra tetiklenir)
+  useEffect(() => {
+    setPageSeo({
+      title: trimmedSearch ? `${trimmedSearch} akor arama sonuçları | AKOR` : 'AKOR | Türkçe şarkı akorları',
+      description: trimmedSearch
+        ? `${trimmedSearch} için şarkı ve sanatçı akorlarını ara; favorilerine ekle ve çalma modunda pratik yap.`
+        : 'Türkçe şarkı akorlarını ara, favorilerine ekle, son baktıklarına dön ve çalma modunda pratik yap.',
+      canonicalPath: '/',
+    });
+  }, [trimmedSearch]);
+
   useEffect(() => {
     const delay = setTimeout(() => {
       performSearch(searchTerm);
@@ -179,7 +298,6 @@ export default function Home() {
     };
   }, []);
 
-  // Kullanıcı özellikle Enter'a basmak isterse anında ara
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       performSearch(searchTerm);
@@ -199,6 +317,28 @@ export default function Home() {
 
     window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(nextFavorites));
     setFavoriteSongs(nextFavorites);
+  };
+
+  const submitSongRequest = async ({ songTitle, artistName, note }) => {
+    const requestPayload = {
+      song_title: songTitle,
+      artist_name: artistName || null,
+      search_query: trimmedSearch || null,
+      note: note || null,
+    };
+    const localPayload = { ...requestPayload, created_at: new Date().toISOString() };
+
+    try {
+      const { error } = await supabase.from('song_requests').insert(requestPayload);
+      if (error) throw error;
+
+      saveLocalRequest(localPayload);
+      return { ok: true, message: 'İsteğini aldık, teşekkürler! Yeni akorlarda önceliklendireceğiz.' };
+    } catch (error) {
+      console.warn('Şarkı isteği Supabase’e yazılamadı, yerel olarak saklandı:', error.message);
+      saveLocalRequest(localPayload);
+      return { ok: true, message: 'İsteğini bu cihazda kaydettik. Veritabanı hazır olduğunda otomatik toplama açılabilir.' };
+    }
   };
 
   return (
@@ -267,7 +407,14 @@ export default function Home() {
             {loading ? 'Şarkılar aranıyor...' : `${songs.length} şarkı listeleniyor`}
           </p>
         </div>
-        {loading && <Loader2 className="animate-spin text-blue-500" size={24} />}
+        <div className="flex items-center gap-2">
+          {!loading && trimmedSearch && (
+            <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-blue-600 shadow-sm">
+              {songs.length} sonuç
+            </span>
+          )}
+          {loading && <Loader2 className="animate-spin text-blue-500" size={24} />}
+        </div>
       </div>
 
       {errorMessage && (
@@ -276,20 +423,24 @@ export default function Home() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-        {!loading && songs.length > 0 ? (
-          songs.map((song, index) => (
-            <SongCard
-              key={song.id || song.slug}
-              song={song}
-              index={index}
-              colorSchemes={colorSchemes}
-              favoriteSongs={favoriteSongs}
-              onToggleFavorite={toggleFavorite}
-            />
-          ))
-        ) : null}
-      </div>
+      {loading ? (
+        <LoadingGrid />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+          {songs.length > 0 ? (
+            songs.map((song, index) => (
+              <SongCard
+                key={song.id || song.slug}
+                song={song}
+                index={index}
+                colorSchemes={colorSchemes}
+                favoriteSongs={favoriteSongs}
+                onToggleFavorite={toggleFavorite}
+              />
+            ))
+          ) : null}
+        </div>
+      )}
 
       {!loading && songs.length === 0 && !errorMessage && (
         <div className="rounded-[2rem] border border-dashed border-blue-200 bg-white p-10 text-center">
@@ -309,6 +460,7 @@ export default function Home() {
               </button>
             ))}
           </div>
+          <SongRequestForm key={trimmedSearch || 'empty'} initialQuery={trimmedSearch} onSubmitRequest={submitSongRequest} />
         </div>
       )}
     </div>

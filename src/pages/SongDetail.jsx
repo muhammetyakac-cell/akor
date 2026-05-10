@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ChordViewer from '../components/ChordViewer';
 import { ArrowLeft } from 'lucide-react';
+import { setPageSeo } from '../lib/seo';
 
 const RECENT_KEY = 'akor:recentSongs';
 
@@ -53,6 +54,12 @@ export default function SongDetail() {
           slug: song.slug
         };
 
+        setPageSeo({
+          title: `${nextSongData.title} Akor - ${nextSongData.artist} | AKOR`,
+          description: `${nextSongData.artist} - ${nextSongData.title} akorlarını görüntüle, tonu transpoze et ve çalma moduyla pratik yap.`,
+          canonicalPath: `/song/${nextSongData.slug}`,
+        });
+
         if (isMounted) {
           setSongData(nextSongData);
         }
@@ -69,6 +76,11 @@ export default function SongDetail() {
 
       } catch (error) {
         console.error('Şarkı detayı çekilemedi:', error.message);
+        setPageSeo({
+          title: 'Şarkı bulunamadı | AKOR',
+          description: 'Aradığın şarkı akoru bulunamadı. Ana sayfadan başka bir şarkı veya sanatçı arayabilirsin.',
+          canonicalPath: `/song/${slug}`,
+        });
         if (isMounted) {
           setSongData(null);
         }
