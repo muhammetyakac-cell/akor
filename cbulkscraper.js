@@ -42,8 +42,6 @@ async function analyzePageLinks(page) {
 
 // --- BURAYA İSTEDİĞİN KADAR LİNK EKLEYEBİLİRSİN ---
 const TARGET_URLS = [
-'https://akorlar.com/ara/ac',
-'https://akorlar.com/ara/ad',
 'https://akorlar.com/ara/ae',
 'https://akorlar.com/ara/af',
 'https://akorlar.com/ara/ag',
