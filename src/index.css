@@ -1,0 +1,45 @@
+﻿@import "tailwindcss";
+
+@theme {
+  --font-mono: "Fira Code", monospace;
+}
+
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
+  white-space: pre !important;
+}
+
+* { letter-spacing: 0px !important; }
+
+pre, .font-mono { font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace !important; }
+
+/* --- EKLEDİĞİMİZ SCROLLBAR KODLARI (AŞAĞISI) --- */
+
+html {
+  overflow-y: scroll; /* Sayfa zıplamasını önlemek için her zaman barı gösterir */
+}
+
+/* Chrome, Edge ve Safari için */
+::-webkit-scrollbar {
+  width: 60px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f9ff; /* Arka planınla uyumlu açık mavi */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbdcf7; /* Çubuğun rengi */
+  border-radius: 50px;
+  border: 30px solid #f5f9ff;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1c4fd; /* Üzerine gelince biraz koyulaşır */
+}
+
+/* Firefox için */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: #1c66de #e5e9ee;
+}
