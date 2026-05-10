@@ -1,8 +1,22 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ChordViewer from '../components/ChordViewer';
 import { ArrowLeft } from 'lucide-react';
+
+const RECENT_KEY = 'akor:recentSongs';
+
+const getRecentSongs = () => {
+  const rawRecentSongs = window.localStorage.getItem(RECENT_KEY);
+  if (!rawRecentSongs) return [];
+
+  try {
+    const parsedRecentSongs = JSON.parse(rawRecentSongs);
+    return Array.isArray(parsedRecentSongs) ? parsedRecentSongs : [];
+  } catch {
+    return [];
+  }
+};
 
 export default function SongDetail() {
   const { slug } = useParams();
@@ -10,42 +24,67 @@ export default function SongDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSongDetail();
-  }, [slug]);
+    let isMounted = true;
 
-  const fetchSongDetail = async () => {
-    try {
-      const { data: song, error: songError } = await supabase
-        .from('songs')
-        .select('id, title, artists(name)')
-        .eq('slug', slug)
-        .single();
+    async function fetchSongDetail() {
+      setLoading(true);
 
-      if (songError) throw songError;
+      try {
+        const { data: song, error: songError } = await supabase
+          .from('songs')
+          .select('id, title, slug, artists(name)')
+          .eq('slug', slug)
+          .single();
 
-      const { data: chord, error: chordError } = await supabase
-        .from('chords')
-        .select('content')
-        .eq('song_id', song.id)
-        .single();
+        if (songError) throw songError;
 
-      if (chordError) throw chordError;
+        const { data: chord, error: chordError } = await supabase
+          .from('chords')
+          .select('content')
+          .eq('song_id', song.id)
+          .single();
 
-      setSongData({
-        title: song.title,
-        artist: song.artists.name,
-        content: chord.content
-      });
+        if (chordError) throw chordError;
 
-      // İZLENME SAYISINI ARTIR (Sadece bu satır eklendi)
-      await supabase.rpc('increment_view_count', { song_id: song.id });
+        const nextSongData = {
+          title: song.title,
+          artist: song.artists.name,
+          content: chord.content,
+          slug: song.slug
+        };
 
-    } catch (error) {
-      console.error('Şarkı detayı çekilemedi:', error.message);
-    } finally {
-      setLoading(false);
+        if (isMounted) {
+          setSongData(nextSongData);
+        }
+
+        const recentPayload = { slug: song.slug, title: song.title, artist: song.artists.name };
+        const nextRecentSongs = [
+          recentPayload,
+          ...getRecentSongs().filter((recentSong) => recentSong.slug !== song.slug)
+        ].slice(0, 8);
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(nextRecentSongs));
+
+        // İZLENME SAYISINI ARTIR
+        await supabase.rpc('increment_view_count', { song_id: song.id });
+
+      } catch (error) {
+        console.error('Şarkı detayı çekilemedi:', error.message);
+        if (isMounted) {
+          setSongData(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
-  };
+
+    fetchSongDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
 
   if (loading) {
     return (
@@ -66,18 +105,20 @@ export default function SongDetail() {
 
   return (
     <div className="py-8">
-      <Link 
-        to="/" 
+      <Link
+        to="/"
         className="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 font-medium mb-2 transition-colors px-4 py-2 hover:bg-blue-50 rounded-lg -ml-4"
       >
         <ArrowLeft size={20} />
         Ana Sayfaya Dön
       </Link>
-      
-      <ChordViewer 
+
+      <ChordViewer
+        key={songData.slug}
         title={songData.title}
         artist={songData.artist}
         rawContent={songData.content}
+        songSlug={songData.slug}
       />
     </div>
   );
