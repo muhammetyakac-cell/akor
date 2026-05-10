@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -22,6 +23,14 @@ export default function ChordViewer({ title, artist, rawContent }) {
 
   const chordRegex = /(^|\s|[(])([A-G][#b]?)(m|min|maj|sus|dim|aug|add)?(4|5|6|7|9|11|13|\/|(\/[A-G][#b]?))*(?=$|\s|[)])/g;
 
+  const getArtistSlug = (name) => {
+    if (!name) return '';
+    return name.toLowerCase()
+      .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+      .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  };
+
   const renderContent = () => {
     if (!rawContent) return null;
     const lines = rawContent.split('\n');
@@ -37,8 +46,6 @@ export default function ChordViewer({ title, artist, rawContent }) {
         padding: '0',
         letterSpacing: '0px',
         transform: 'none',
-        // ASIL SİHİR: Boşlukları %50 daraltıyoruz (-0.5ch)
-        // Hem akorda hem sözde uyguluyoruz ki hizalama bozulmasın
         wordSpacing: '-0.46ch' 
       };
 
@@ -78,7 +85,14 @@ export default function ChordViewer({ title, artist, rawContent }) {
       <div className="mb-8 border-b pb-6 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{title}</h1>
-          <h2 className="text-xl text-gray-500 mt-1">{artist}</h2>
+          <h2 className="text-xl mt-1">
+            <Link 
+              to={`/artist/${getArtistSlug(artist)}`} 
+              className="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition-colors cursor-pointer"
+            >
+              {artist}
+            </Link>
+          </h2>
         </div>
         <div className="flex items-center gap-2 bg-white shadow-sm px-3 py-1.5 rounded-full border border-gray-200">
           <button onClick={() => setTransposeStep(s => s - 1)} className="p-1.5 hover:bg-gray-100 rounded-full cursor-pointer transition-colors"><Minus size={18} /></button>
