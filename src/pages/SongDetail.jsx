@@ -36,6 +36,10 @@ export default function SongDetail() {
         artist: song.artists.name,
         content: chord.content
       });
+
+      // İZLENME SAYISINI ARTIR (Sadece bu satır eklendi)
+      await supabase.rpc('increment_view_count', { song_id: song.id });
+
     } catch (error) {
       console.error('Şarkı detayı çekilemedi:', error.message);
     } finally {

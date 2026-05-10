@@ -6,7 +6,6 @@ export default function Home() {
   const [songs, setSongs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Modern, saydam ve soft renk paleti (Tailwind 3+ / opacity desteğiyle)
   const colorSchemes = [
     { bg: 'bg-teal-50', border: 'border-teal-100', text: 'text-teal-800', hover: 'hover:bg-teal-100' },
     { bg: 'bg-rose-50', border: 'border-rose-100', text: 'text-rose-800', hover: 'hover:bg-rose-100' },
@@ -18,18 +17,58 @@ export default function Home() {
     { bg: 'bg-fuchsia-50', border: 'border-fuchsia-100', text: 'text-fuchsia-800', hover: 'hover:bg-fuchsia-100' },
   ];
 
-  useEffect(() => {
-    async function fetchSongs() {
-      const { data } = await supabase.from('songs').select('*, artists(name)');
-      if (data) setSongs(data);
+  // Arama Mantığı (Backend)
+  const performSearch = async (term) => {
+    if (!term) {
+      // Arama kutusu boşsa, tıklanma sayısına göre ilk 50 popüler şarkıyı getir
+      const { data } = await supabase
+        .from('songs')
+        .select('*, artists(name)')
+        .order('view_count', { ascending: false, nullsFirst: false })
+        .limit(50);
+      setSongs(data || []);
+      return;
     }
-    fetchSongs();
+
+    // Arama kutusu doluysa: Supabase .or hatasını önlemek için iki temiz sorgu atıyoruz
+    const { data: titleMatch } = await supabase
+      .from('songs')
+      .select('*, artists(name)')
+      .ilike('title', `%${term}%`)
+      .limit(50);
+
+    const { data: artistMatch } = await supabase
+      .from('songs')
+      .select('*, artists!inner(name)')
+      .ilike('artists.name', `%${term}%`)
+      .limit(50);
+
+    // Gelen sonuçları birleştir ve çift olanları temizle
+    const mergedResults = [...(titleMatch || []), ...(artistMatch || [])];
+    const uniqueSongs = Array.from(new Map(mergedResults.map(item => [item.id, item])).values());
+
+    setSongs(uniqueSongs);
+  };
+
+  // Sayfa ilk açıldığında popüler şarkıları getir
+  useEffect(() => {
+    performSearch('');
   }, []);
 
-  const filteredSongs = songs.filter(s => 
-    s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.artists?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Kullanıcı yazarken otomatik ara (Yazmayı bırakınca 300ms sonra tetiklenir)
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      performSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [searchTerm]);
+
+  // Kullanıcı özellikle Enter'a basmak isterse anında ara
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      performSearch(searchTerm);
+    }
+  };
 
   return (
     <div>
@@ -40,35 +79,42 @@ export default function Home() {
             type="text" 
             placeholder="Şarkı veya sanatçı ara..." 
             className="w-full px-6 py-4 bg-white border border-gray-100 rounded-2xl shadow-sm outline-none focus:border-gray-300 transition-all text-lg"
+            value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </div>
       </div>
 
-      {/* Modern Transparan Grid - 1 Satırda 4 Kutucuk */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {filteredSongs.map((song, index) => {
-          const scheme = colorSchemes[index % colorSchemes.length];
-          return (
-            <Link 
-              key={song.id} 
-              to={`/song/${song.slug}`}
-              className={`
-                ${scheme.bg} ${scheme.border} ${scheme.hover}
-                aspect-square p-6 border rounded-[2rem]
-                flex flex-col justify-center items-center text-center 
-                transition-all duration-300 transform hover:-translate-y-2
-              `}
-            >
-              <h3 className={`${scheme.text} font-black text-xl leading-tight mb-2 tracking-tight`}>
-                {song.title}
-              </h3>
-              <p className={`${scheme.text} opacity-60 text-sm font-bold uppercase tracking-widest`}>
-                {song.artists?.name}
-              </p>
-            </Link>
-          );
-        })}
+        {songs.length > 0 ? (
+          songs.map((song, index) => {
+            const scheme = colorSchemes[index % colorSchemes.length];
+            return (
+              <Link 
+                key={song.id} 
+                to={`/song/${song.slug}`}
+                className={`
+                  ${scheme.bg} ${scheme.border} ${scheme.hover}
+                  aspect-square p-6 border rounded-[2rem]
+                  flex flex-col justify-center items-center text-center 
+                  transition-all duration-300 transform hover:-translate-y-2
+                `}
+              >
+                <h3 className={`${scheme.text} font-black text-xl leading-tight mb-2 tracking-tight`}>
+                  {song.title}
+                </h3>
+                <p className={`${scheme.text} opacity-60 text-sm font-bold uppercase tracking-widest`}>
+                  {song.artists?.name}
+                </p>
+              </Link>
+            );
+          })
+        ) : (
+          <div className="col-span-2 md:col-span-4 text-center text-gray-400 font-medium py-10">
+            Sonuç bulunamadı.
+          </div>
+        )}
       </div>
     </div>
   );
