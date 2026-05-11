@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
 import { Clock, Heart, Inbox, Loader2, Music, Search, Send, Sparkles, Users, X } from 'lucide-react';
-import { setPageSeo } from '../lib/seo';
+import { BRAND_NAME, setPageSeo } from '../lib/seo';
 
 const FAVORITES_KEY = 'akor:favorites';
 const RECENT_KEY = 'akor:recentSongs';
 const REQUESTS_KEY = 'akor:songRequests';
-const QUICK_SEARCH_TERMS = ['Sezen Aksu', 'Kolay akor', 'Popüler', 'Akustik'];
 const RESULT_TABS = [
   { id: 'songs', label: 'Şarkılar' },
   { id: 'artists', label: 'Sanatçılar' },
@@ -220,7 +219,7 @@ function LoadingGrid() {
 export default function Home() {
   const [songs, setSongs] = useState([]);
   const [artists, setArtists] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(() => new URLSearchParams(window.location.search).get('q') || '');
   const [activeTab, setActiveTab] = useState('songs');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -291,12 +290,25 @@ export default function Home() {
   };
 
   useEffect(() => {
+    const siteUrl = window.location.origin;
+
     setPageSeo({
-      title: trimmedSearch ? `${trimmedSearch} akor arama sonuçları | AKOR` : 'AKOR | Türkçe şarkı akorları',
+      title: trimmedSearch ? `${trimmedSearch} akor arama sonuçları | ${BRAND_NAME}` : `${BRAND_NAME} | Türkçe şarkı akorları`,
       description: trimmedSearch
-        ? `${trimmedSearch} için şarkı ve sanatçı akorlarını ara; favorilerine ekle ve çalma modunda pratik yap.`
-        : 'Türkçe şarkı akorlarını ara, favorilerine ekle, son baktıklarına dön ve çalma modunda pratik yap.',
+        ? `${trimmedSearch} akorları, sanatçı akorları ve kolay transpoze seçenekleriyle şarkı arama sonuçları.`
+        : 'Türkçe şarkı akorları, sanatçı akorları, kolay transpoze ve çalma modu ile gitar pratiği.',
       canonicalPath: '/',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: BRAND_NAME,
+        url: siteUrl,
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${siteUrl}/?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
     });
   }, [trimmedSearch]);
 
@@ -388,18 +400,6 @@ export default function Home() {
               <X size={18} />
             </button>
           )}
-        </div>
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          {QUICK_SEARCH_TERMS.map((term) => (
-            <button
-              type="button"
-              key={term}
-              onClick={() => setSearchTerm(term)}
-              className="rounded-full border border-blue-100 bg-white px-4 py-2 text-sm font-bold text-blue-500 transition-colors hover:bg-blue-50"
-            >
-              {term}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -493,20 +493,8 @@ export default function Home() {
           <p className="mx-auto mb-5 max-w-md text-gray-500">
             {hasAnyResults
               ? 'Diğer sekmede sonuç var; sekmeler arasında geçiş yapabilir veya arama metnini kısaltabilirsin.'
-              : 'Şarkı adını kısaltmayı, sanatçı adıyla aramayı veya aşağıdaki hızlı aramalardan birini denemeyi deneyebilirsin.'}
+              : 'Şarkı adını kısaltmayı veya sanatçı adıyla aramayı deneyebilirsin.'}
           </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {QUICK_SEARCH_TERMS.map((term) => (
-              <button
-                type="button"
-                key={term}
-                onClick={() => setSearchTerm(term)}
-                className="rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
-              >
-                {term}
-              </button>
-            ))}
-          </div>
           {activeTab === 'songs' && (
             <SongRequestForm key={trimmedSearch || 'empty'} initialQuery={trimmedSearch} onSubmitRequest={submitSongRequest} />
           )}

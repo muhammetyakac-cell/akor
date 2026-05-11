@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
 import { RefreshCcw, Search, Users, X } from 'lucide-react';
-import { setPageSeo } from '../lib/seo';
+import { BRAND_NAME, setPageSeo } from '../lib/seo';
 
 const shuffleArtists = (artists) => [...artists].sort(() => Math.random() - 0.5);
 
@@ -14,9 +14,15 @@ export default function Artists() {
 
   useEffect(() => {
     setPageSeo({
-      title: 'Sanatçılar | AKOR',
-      description: 'AKOR kütüphanesindeki sanatçıları keşfet, rastgele önerilen müzisyenlere bak ve sanatçı adına göre arama yap.',
+      title: `Sanatçılar | ${BRAND_NAME}`,
+      description: `${BRAND_NAME} kütüphanesindeki sanatçı akorlarını keşfet, rastgele önerilen müzisyenlere bak ve sanatçı adına göre arama yap.`,
       canonicalPath: '/artists',
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: `${BRAND_NAME} Sanatçılar`,
+        url: `${window.location.origin}/artists`,
+      },
     });
 
     async function fetchArtists() {

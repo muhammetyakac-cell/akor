@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ChordViewer from '../components/ChordViewer';
 import { ArrowLeft } from 'lucide-react';
-import { setPageSeo } from '../lib/seo';
+import { BRAND_NAME, setPageSeo } from '../lib/seo';
 
 const RECENT_KEY = 'akor:recentSongs';
 
@@ -55,9 +55,22 @@ export default function SongDetail() {
         };
 
         setPageSeo({
-          title: `${nextSongData.title} Akor - ${nextSongData.artist} | AKOR`,
-          description: `${nextSongData.artist} - ${nextSongData.title} akorlarını görüntüle, tonu transpoze et ve çalma moduyla pratik yap.`,
+          title: `${nextSongData.title} Akorları - ${nextSongData.artist} | ${BRAND_NAME}`,
+          description: `${nextSongData.title} akorları, ${nextSongData.artist} akorları, kolay transpoze ve çalma modu ile gitar pratiği.`,
           canonicalPath: `/song/${nextSongData.slug}`,
+          ogType: 'music.song',
+          structuredData: {
+            '@context': 'https://schema.org',
+            '@type': 'MusicComposition',
+            name: nextSongData.title,
+            url: `${window.location.origin}/song/${nextSongData.slug}`,
+            inLanguage: 'tr',
+            isAccessibleForFree: true,
+            byArtist: {
+              '@type': 'MusicGroup',
+              name: nextSongData.artist,
+            },
+          },
         });
 
         if (isMounted) {
@@ -77,7 +90,7 @@ export default function SongDetail() {
       } catch (error) {
         console.error('Şarkı detayı çekilemedi:', error.message);
         setPageSeo({
-          title: 'Şarkı bulunamadı | AKOR',
+          title: `Şarkı bulunamadı | ${BRAND_NAME}`,
           description: 'Aradığın şarkı akoru bulunamadı. Ana sayfadan başka bir şarkı veya sanatçı arayabilirsin.',
           canonicalPath: `/song/${slug}`,
         });
