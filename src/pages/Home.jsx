@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
-import { Clock, Heart, Inbox, Loader2, Music, Search, Send, Sparkles, X } from 'lucide-react';
+import { Clock, Heart, Inbox, Loader2, Music, Search, Send, Sparkles, Users, X } from 'lucide-react';
 import { setPageSeo } from '../lib/seo';
 
 const FAVORITES_KEY = 'akor:favorites';
 const RECENT_KEY = 'akor:recentSongs';
 const REQUESTS_KEY = 'akor:songRequests';
 const QUICK_SEARCH_TERMS = ['Sezen Aksu', 'Kolay akor', 'Popüler', 'Akustik'];
+const RESULT_TABS = [
+  { id: 'songs', label: 'Şarkılar' },
+  { id: 'artists', label: 'Sanatçılar' },
+];
 
 const getStoredSongs = (key) => {
   const rawSongs = window.localStorage.getItem(key);
@@ -59,6 +63,21 @@ function SongCard({ song, index, colorSchemes, favoriteSongs, onToggleFavorite }
         <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
       </button>
     </div>
+  );
+}
+
+function ArtistCard({ artist }) {
+  return (
+    <Link
+      to={`/artist/${artist.slug}`}
+      className="group flex aspect-square flex-col items-center justify-center rounded-[2rem] border border-blue-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-2 hover:border-blue-200 hover:bg-blue-50 hover:shadow-lg"
+    >
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-2xl font-black text-blue-400 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+        {artist.name?.[0]?.toUpperCase() || '?'}
+      </div>
+      <h3 className="text-lg font-black text-gray-800 transition-colors group-hover:text-blue-700">{artist.name}</h3>
+      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-gray-400">Sanatçı</p>
+    </Link>
   );
 }
 
@@ -200,7 +219,9 @@ function LoadingGrid() {
 
 export default function Home() {
   const [songs, setSongs] = useState([]);
+  const [artists, setArtists] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('songs');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [favoriteSongs, setFavoriteSongs] = useState(() => getStoredSongs(FAVORITES_KEY));
@@ -218,6 +239,8 @@ export default function Home() {
   ], []);
 
   const trimmedSearch = searchTerm.trim();
+  const activeResults = activeTab === 'songs' ? songs : artists;
+  const hasAnyResults = songs.length > 0 || artists.length > 0;
 
   const refreshStoredSongs = () => {
     setFavoriteSongs(getStoredSongs(FAVORITES_KEY));
@@ -230,41 +253,38 @@ export default function Home() {
     setErrorMessage('');
 
     try {
-      if (!cleanTerm) {
-        const { data, error } = await supabase
-          .from('songs')
-          .select('*, artists(name)')
-          .order('view_count', { ascending: false, nullsFirst: false })
-          .limit(50);
+      const songQuery = cleanTerm
+        ? Promise.all([
+            supabase.from('songs').select('*, artists(name)').ilike('title', `%${cleanTerm}%`).limit(50),
+            supabase.from('songs').select('*, artists!inner(name)').ilike('artists.name', `%${cleanTerm}%`).limit(50),
+          ])
+        : supabase
+            .from('songs')
+            .select('*, artists(name)')
+            .order('view_count', { ascending: false, nullsFirst: false })
+            .limit(50)
+            .then((popularSongs) => [popularSongs, { data: [], error: null }]);
 
-        if (error) throw error;
-        setSongs(data || []);
-        return;
+      const artistQuery = cleanTerm
+        ? supabase.from('artists').select('*').ilike('name', `%${cleanTerm}%`).order('name', { ascending: true }).limit(50)
+        : supabase.from('artists').select('*').order('name', { ascending: true }).limit(50);
+
+      const [[titleMatch, artistSongMatch], artistResult] = await Promise.all([songQuery, artistQuery]);
+
+      if (titleMatch.error || artistSongMatch.error || artistResult.error) {
+        throw titleMatch.error || artistSongMatch.error || artistResult.error;
       }
 
-      const [{ data: titleMatch, error: titleError }, { data: artistMatch, error: artistError }] = await Promise.all([
-        supabase
-          .from('songs')
-          .select('*, artists(name)')
-          .ilike('title', `%${cleanTerm}%`)
-          .limit(50),
-        supabase
-          .from('songs')
-          .select('*, artists!inner(name)')
-          .ilike('artists.name', `%${cleanTerm}%`)
-          .limit(50),
-      ]);
-
-      if (titleError || artistError) throw titleError || artistError;
-
-      const mergedResults = [...(titleMatch || []), ...(artistMatch || [])];
+      const mergedResults = [...(titleMatch.data || []), ...(artistSongMatch.data || [])];
       const uniqueSongs = Array.from(new Map(mergedResults.map((item) => [item.id, item])).values());
 
       setSongs(uniqueSongs);
+      setArtists(artistResult.data || []);
     } catch (error) {
       console.error('Arama yapılamadı:', error.message);
-      setErrorMessage('Şarkıları getirirken bir sorun oluştu. Birazdan tekrar dene.');
+      setErrorMessage('Şarkıları ve sanatçıları getirirken bir sorun oluştu. Birazdan tekrar dene.');
       setSongs([]);
+      setArtists([]);
     } finally {
       setLoading(false);
     }
@@ -400,20 +420,41 @@ export default function Home() {
         </div>
       )}
 
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900">{trimmedSearch ? 'Arama sonuçları' : 'Popüler akorlar'}</h2>
-          <p className="text-sm font-medium text-gray-500">
-            {loading ? 'Şarkılar aranıyor...' : `${songs.length} şarkı listeleniyor`}
-          </p>
+      <div className="mb-5 flex flex-col gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900">{trimmedSearch ? 'Arama sonuçları' : 'Popüler akorlar'}</h2>
+            <p className="text-sm font-medium text-gray-500">
+              {loading ? 'Şarkılar ve sanatçılar aranıyor...' : `${songs.length} şarkı, ${artists.length} sanatçı listeleniyor`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {!loading && trimmedSearch && (
+              <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-blue-600 shadow-sm">
+                {activeResults.length} sonuç
+              </span>
+            )}
+            {loading && <Loader2 className="animate-spin text-blue-500" size={24} />}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {!loading && trimmedSearch && (
-            <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-blue-600 shadow-sm">
-              {songs.length} sonuç
-            </span>
-          )}
-          {loading && <Loader2 className="animate-spin text-blue-500" size={24} />}
+
+        <div className="grid grid-cols-2 gap-2 rounded-3xl bg-white p-2 shadow-sm">
+          {RESULT_TABS.map((tab) => {
+            const count = tab.id === 'songs' ? songs.length : artists.length;
+            const Icon = tab.id === 'songs' ? Music : Users;
+            return (
+              <button
+                type="button"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-colors ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}
+              >
+                <Icon size={18} />
+                {tab.label}
+                <span className={`rounded-full px-2 py-0.5 text-xs ${activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -425,28 +466,34 @@ export default function Home() {
 
       {loading ? (
         <LoadingGrid />
+      ) : activeTab === 'songs' ? (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+          {songs.map((song, index) => (
+            <SongCard
+              key={song.id || song.slug}
+              song={song}
+              index={index}
+              colorSchemes={colorSchemes}
+              favoriteSongs={favoriteSongs}
+              onToggleFavorite={toggleFavorite}
+            />
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-          {songs.length > 0 ? (
-            songs.map((song, index) => (
-              <SongCard
-                key={song.id || song.slug}
-                song={song}
-                index={index}
-                colorSchemes={colorSchemes}
-                favoriteSongs={favoriteSongs}
-                onToggleFavorite={toggleFavorite}
-              />
-            ))
-          ) : null}
+          {artists.map((artist) => <ArtistCard key={artist.id || artist.slug} artist={artist} />)}
         </div>
       )}
 
-      {!loading && songs.length === 0 && !errorMessage && (
+      {!loading && activeResults.length === 0 && !errorMessage && (
         <div className="rounded-[2rem] border border-dashed border-blue-200 bg-white p-10 text-center">
-          <h3 className="mb-2 text-2xl font-black text-gray-800">Sonuç bulamadık.</h3>
+          <h3 className="mb-2 text-2xl font-black text-gray-800">
+            {hasAnyResults ? `${activeTab === 'songs' ? 'Şarkı' : 'Sanatçı'} sonucu yok.` : 'Sonuç bulamadık.'}
+          </h3>
           <p className="mx-auto mb-5 max-w-md text-gray-500">
-            Şarkı adını kısaltmayı, sanatçı adıyla aramayı veya aşağıdaki hızlı aramalardan birini denemeyi deneyebilirsin.
+            {hasAnyResults
+              ? 'Diğer sekmede sonuç var; sekmeler arasında geçiş yapabilir veya arama metnini kısaltabilirsin.'
+              : 'Şarkı adını kısaltmayı, sanatçı adıyla aramayı veya aşağıdaki hızlı aramalardan birini denemeyi deneyebilirsin.'}
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             {QUICK_SEARCH_TERMS.map((term) => (
@@ -460,7 +507,9 @@ export default function Home() {
               </button>
             ))}
           </div>
-          <SongRequestForm key={trimmedSearch || 'empty'} initialQuery={trimmedSearch} onSubmitRequest={submitSongRequest} />
+          {activeTab === 'songs' && (
+            <SongRequestForm key={trimmedSearch || 'empty'} initialQuery={trimmedSearch} onSubmitRequest={submitSongRequest} />
+          )}
         </div>
       )}
     </div>

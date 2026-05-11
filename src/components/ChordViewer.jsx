@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Check,
   ChevronDown,
   ChevronUp,
+  Copy,
   Heart,
   Maximize2,
+  MessageCircle,
   Minus,
   Pause,
   Play,
   Plus,
   RotateCcw,
+  Send,
   Type,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -54,6 +58,7 @@ export default function ChordViewer({ title, artist, rawContent, songSlug }) {
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(1.2);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [isFavorite, setIsFavorite] = useState(() => {
     if (!songSlug) return false;
     return getStoredFavorites().some((song) => song.slug === songSlug);
@@ -66,6 +71,8 @@ export default function ChordViewer({ title, artist, rawContent, songSlug }) {
     artist,
   }), [artist, songSlug, title]);
 
+  const shareUrl = useMemo(() => `${window.location.origin}/song/${songSlug}`, [songSlug]);
+  const shareText = `${artist} - ${title} akorları`;
 
   useEffect(() => {
     if (!isAutoScrolling) return undefined;
@@ -146,6 +153,24 @@ export default function ChordViewer({ title, artist, rawContent, songSlug }) {
 
   const adjustFontSize = (amount) => {
     setFontSize((currentSize) => Math.min(24, Math.max(13, currentSize + amount)));
+  };
+
+  const copyShareLink = async () => {
+    await navigator.clipboard?.writeText(shareUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  };
+
+  const openShareWindow = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const shareOnWhatsApp = () => {
+    openShareWindow(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`);
+  };
+
+  const shareOnTelegram = () => {
+    openShareWindow(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
   };
 
   const renderContent = () => {
@@ -229,6 +254,24 @@ export default function ChordViewer({ title, artist, rawContent, songSlug }) {
             <ControlButton label="Tarayıcı tam ekranı" onClick={toggleBrowserFullscreen}>
               <Maximize2 size={18} />
               <span className="hidden sm:inline">Tam ekran</span>
+            </ControlButton>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-3xl border border-blue-100 bg-blue-50/70 p-3">
+          <div className="mb-2 text-sm font-black text-blue-700">Paylaş</div>
+          <div className="flex flex-wrap gap-2">
+            <ControlButton label="Linki kopyala" onClick={copyShareLink} active={copied}>
+              {copied ? <Check size={18} /> : <Copy size={18} />}
+              <span>{copied ? 'Kopyalandı' : 'Linki kopyala'}</span>
+            </ControlButton>
+            <ControlButton label="WhatsApp ile paylaş" onClick={shareOnWhatsApp}>
+              <MessageCircle size={18} />
+              <span>WhatsApp</span>
+            </ControlButton>
+            <ControlButton label="Telegram ile paylaş" onClick={shareOnTelegram}>
+              <Send size={18} />
+              <span>Telegram</span>
             </ControlButton>
           </div>
         </div>
