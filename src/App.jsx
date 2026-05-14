@@ -1,8 +1,9 @@
-﻿import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import Artists from './pages/Artists';
 import ArtistDetail from './pages/ArtistDetail';
 import SongDetail from './pages/SongDetail';
+import { BRAND_NAME } from './lib/seo';
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
         <nav className="bg-white/70 backdrop-blur-xl border-b border-blue-100/50 sticky top-0 z-50">
           <div className="max-w-4xl mx-auto px-4 h-16 flex justify-between items-center">
             <Link to="/" className="text-2xl font-black tracking-tighter hover:text-blue-600 transition-all">
-              AKOR
+              {BRAND_NAME}
             </Link>
             <Link to="/artists" className="text-[20px] font-black tracking-[0.3em] text-blue-400/80 hover:text-blue-600 transition-all uppercase">
               Sanatçılar
