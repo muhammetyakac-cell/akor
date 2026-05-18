@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react'; // <-- BURASI EKLENDİ
 import Home from './pages/Home';
 import Artists from './pages/Artists';
 import ArtistDetail from './pages/ArtistDetail';
@@ -29,6 +30,7 @@ function App() {
           </Routes>
         </main>
       </div>
+      <Analytics /> {/* <-- BURASI EKLENDİ */}
     </Router>
   );
 }
