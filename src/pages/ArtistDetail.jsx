@@ -1,7 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Music } from 'lucide-react';
+import { BRAND_NAME, setPageSeo } from '../lib/seo';
 
 export default function ArtistDetail() {
   const { slug } = useParams();
@@ -20,6 +21,17 @@ export default function ArtistDetail() {
 
       if (artData) {
         setArtist(artData);
+        setPageSeo({
+          title: `${artData.name} Akorları | ${BRAND_NAME}`,
+          description: `${artData.name} akorları, şarkı listesi, kolay transpoze ve çalma modu ile gitar pratiği.`,
+          canonicalPath: `/artist/${artData.slug}`,
+          structuredData: {
+            '@context': 'https://schema.org',
+            '@type': 'MusicGroup',
+            name: artData.name,
+            url: `${window.location.origin}/artist/${artData.slug}`,
+          },
+        });
         // Sonra o sanatçıya ait şarkıları çek
         const { data: sngData } = await supabase
           .from('songs')
@@ -28,6 +40,12 @@ export default function ArtistDetail() {
           .order('title', { ascending: true });
         
         setSongs(sngData || []);
+      } else {
+        setPageSeo({
+          title: `Sanatçı bulunamadı | ${BRAND_NAME}`,
+          description: 'Aradığın sanatçı bulunamadı. Sanatçılar listesinden yeni bir müzisyen seçebilirsin.',
+          canonicalPath: `/artist/${slug}`,
+        });
       }
       setLoading(false);
     }
