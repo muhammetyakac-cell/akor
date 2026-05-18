@@ -41,7 +41,7 @@ function SongCard({ song, index, colorSchemes, favoriteSongs, onToggleFavorite }
         to={`/song/${song.slug}`}
         className={`
           ${scheme.bg} ${scheme.border} ${scheme.hover}
-          flex aspect-square flex-col items-center justify-center rounded-[2rem] border p-6 text-center
+          retro-card flex aspect-square flex-col items-center justify-center rounded-[1.6rem] sm:rounded-[2rem] border p-4 sm:p-6 text-center
           transition-all duration-300 hover:-translate-y-2 hover:shadow-lg
         `}
       >
@@ -56,7 +56,7 @@ function SongCard({ song, index, colorSchemes, favoriteSongs, onToggleFavorite }
       <button
         type="button"
         onClick={() => onToggleFavorite(song)}
-        className={`absolute right-3 top-3 rounded-full p-2 shadow-sm transition-all ${isFavorite ? 'bg-rose-500 text-white' : 'bg-white/80 text-gray-400 hover:bg-white hover:text-rose-500'}`}
+        className={`absolute right-2.5 top-2.5 sm:right-3 sm:top-3 rounded-full p-2 shadow-sm transition-all ${isFavorite ? 'bg-rose-500 text-white' : 'bg-white/90 text-gray-500 hover:bg-white hover:text-rose-500'}`}
         aria-label={isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
       >
         <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
@@ -69,7 +69,7 @@ function ArtistCard({ artist }) {
   return (
     <Link
       to={`/artist/${artist.slug}`}
-      className="group flex aspect-square flex-col items-center justify-center rounded-[2rem] border border-blue-100 bg-white p-6 text-center shadow-sm transition-all hover:-translate-y-2 hover:border-blue-200 hover:bg-blue-50 hover:shadow-lg"
+      className="group retro-card flex aspect-square flex-col items-center justify-center rounded-[1.6rem] sm:rounded-[2rem] border p-4 sm:p-6 text-center transition-all hover:-translate-y-1.5 sm:hover:-translate-y-2"
     >
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-2xl font-black text-blue-400 transition-colors group-hover:bg-blue-600 group-hover:text-white">
         {artist.name?.[0]?.toUpperCase() || '?'}
@@ -82,7 +82,7 @@ function ArtistCard({ artist }) {
 
 function MiniSongList({ title, icon, items, emptyText }) {
   return (
-    <section className="rounded-3xl border border-blue-100 bg-white/80 p-5 shadow-sm">
+    <section className="retro-panel rounded-3xl border p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="rounded-2xl bg-blue-50 p-2 text-blue-600">{icon}</div>
@@ -94,7 +94,7 @@ function MiniSongList({ title, icon, items, emptyText }) {
         <div className="grid gap-2">
           {items.slice(0, 4).map((song) => (
             <Link key={song.slug} to={`/song/${song.slug}`} className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3 transition-colors hover:bg-blue-50">
-              <div>
+              <div className="retro-page">
                 <p className="font-bold text-gray-800">{song.title}</p>
                 <p className="text-sm font-medium text-gray-400">{song.artist}</p>
               </div>
@@ -145,7 +145,7 @@ function SongRequestForm({ initialQuery, onSubmitRequest }) {
         <div className="rounded-2xl bg-white p-3 text-blue-600 shadow-sm">
           <Inbox size={22} />
         </div>
-        <div>
+        <div className="retro-page">
           <h4 className="text-lg font-black text-gray-900">Bulamadığın şarkıyı iste</h4>
           <p className="text-sm font-medium text-gray-500">İsteğini kaydedelim; yeni akor eklerken öncelik verelim.</p>
         </div>
@@ -204,7 +204,7 @@ function SongRequestForm({ initialQuery, onSubmitRequest }) {
 
 function LoadingGrid() {
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
       {Array.from({ length: 8 }).map((_, index) => (
         <div key={index} className="aspect-square animate-pulse rounded-[2rem] border border-blue-50 bg-white/70 p-6">
           <div className="mx-auto mb-5 h-9 w-9 rounded-full bg-blue-100" />
@@ -374,18 +374,18 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <div className="mt-8 mb-10 text-center">
-        <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-black text-blue-600">
+    <div className="retro-page">
+      <div className="mt-4 sm:mt-8 mb-8 sm:mb-10 text-center">
+        <div className="retro-pill mx-auto mb-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-black">
           <Sparkles size={16} /> Akorunu bul, tonu ayarla, çalmaya başla
         </div>
-        <h1 className="mb-8 text-4xl font-black tracking-tight text-gray-900">Hangi şarkıyı çalmak istersin?</h1>
+        <h1 className="mb-6 sm:mb-8 text-3xl sm:text-4xl font-black tracking-tight text-gray-900">Hangi şarkıyı çalmak istersin?</h1>
         <div className="relative mx-auto max-w-xl">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={22} />
           <input
             type="text"
             placeholder="Şarkı veya sanatçı ara..."
-            className="w-full rounded-2xl border border-gray-100 bg-white py-4 pr-14 pl-14 text-lg shadow-sm outline-none transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-50"
+            className="retro-input w-full rounded-2xl py-3.5 sm:py-4 pr-12 sm:pr-14 pl-12 sm:pl-14 text-base sm:text-lg outline-none transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -404,7 +404,7 @@ export default function Home() {
       </div>
 
       {!trimmedSearch && (
-        <div className="mb-10 grid gap-4 md:grid-cols-2">
+        <div className="mb-8 sm:mb-10 grid gap-4 md:grid-cols-2">
           <MiniSongList
             title="Favorilerim"
             icon={<Heart size={20} />}
@@ -422,7 +422,7 @@ export default function Home() {
 
       <div className="mb-5 flex flex-col gap-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="retro-page">
             <h2 className="text-2xl font-black text-gray-900">{trimmedSearch ? 'Arama sonuçları' : 'Popüler akorlar'}</h2>
             <p className="text-sm font-medium text-gray-500">
               {loading ? 'Şarkılar ve sanatçılar aranıyor...' : `${songs.length} şarkı, ${artists.length} sanatçı listeleniyor`}
@@ -438,7 +438,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-3xl bg-white p-2 shadow-sm">
+        <div className="retro-tabs grid grid-cols-2 gap-2 rounded-3xl p-2">
           {RESULT_TABS.map((tab) => {
             const count = tab.id === 'songs' ? songs.length : artists.length;
             const Icon = tab.id === 'songs' ? Music : Users;
@@ -447,7 +447,7 @@ export default function Home() {
                 type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-colors ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}
+                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-colors ${activeTab === tab.id ? 'retro-tab-active text-white shadow-sm' : 'text-gray-600 hover:bg-amber-50 hover:text-amber-800'}`}
               >
                 <Icon size={18} />
                 {tab.label}
@@ -467,7 +467,7 @@ export default function Home() {
       {loading ? (
         <LoadingGrid />
       ) : activeTab === 'songs' ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
           {songs.map((song, index) => (
             <SongCard
               key={song.id || song.slug}
@@ -480,7 +480,7 @@ export default function Home() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
           {artists.map((artist) => <ArtistCard key={artist.id || artist.slug} artist={artist} />)}
         </div>
       )}
