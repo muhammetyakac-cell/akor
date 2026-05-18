@@ -29,6 +29,7 @@ function App() {
             <Route path="/song/:slug" element={<SongDetail />} />
           </Routes>
         </main>
+        <SpeedInsights />
       </div>
       <Analytics />
     </Router>
