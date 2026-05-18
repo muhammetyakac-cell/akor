@@ -82,23 +82,23 @@ function ArtistCard({ artist }) {
 
 function MiniSongList({ title, icon, items, emptyText }) {
   return (
-    <section className="rounded-3xl border border-blue-100 bg-white/80 p-5 shadow-sm">
+    <section className="rounded-3xl border-4 border-stone-900 bg-[#fffef7] p-4 shadow-[5px_5px_0_#1c1917] sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="rounded-2xl bg-blue-50 p-2 text-blue-600">{icon}</div>
+          <div className="rounded-xl border-2 border-stone-900 bg-lime-200 p-2 text-stone-900">{icon}</div>
           <h2 className="text-lg font-black text-gray-900">{title}</h2>
         </div>
-        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-500">{items.length}</span>
+        <span className="rounded-full border-2 border-stone-700 bg-amber-100 px-3 py-1 text-xs font-black text-stone-700">{items.length}</span>
       </div>
       {items.length > 0 ? (
         <div className="grid gap-2">
           {items.slice(0, 4).map((song) => (
-            <Link key={song.slug} to={`/song/${song.slug}`} className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3 transition-colors hover:bg-blue-50">
+            <Link key={song.slug} to={`/song/${song.slug}`} className="flex items-center justify-between rounded-2xl border-2 border-stone-200 bg-[#fff8df] px-4 py-3 transition-colors hover:bg-pink-100">
               <div>
-                <p className="font-bold text-gray-800">{song.title}</p>
+                <p className="font-black text-stone-800">{song.title}</p>
                 <p className="text-sm font-medium text-gray-400">{song.artist}</p>
               </div>
-              <span className="text-sm font-black text-blue-500">Çal</span>
+              <span className="text-sm font-black text-fuchsia-700">Çal</span>
             </Link>
           ))}
         </div>
@@ -204,7 +204,7 @@ function SongRequestForm({ initialQuery, onSubmitRequest }) {
 
 function LoadingGrid() {
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
       {Array.from({ length: 8 }).map((_, index) => (
         <div key={index} className="aspect-square animate-pulse rounded-[2rem] border border-blue-50 bg-white/70 p-6">
           <div className="mx-auto mb-5 h-9 w-9 rounded-full bg-blue-100" />
@@ -374,18 +374,18 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <div className="mt-8 mb-10 text-center">
-        <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-black text-blue-600">
+    <div className="rounded-[2rem] border-4 border-stone-900 bg-[#fff9e8] p-4 shadow-[8px_8px_0_#1c1917] sm:p-6">
+      <div className="mb-8 mt-3 text-center sm:mb-10">
+        <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border-2 border-stone-900 bg-pink-200 px-4 py-2 text-xs font-black text-stone-900 shadow-[3px_3px_0_#1c1917] sm:text-sm">
           <Sparkles size={16} /> Akorunu bul, tonu ayarla, çalmaya başla
         </div>
-        <h1 className="mb-8 text-4xl font-black tracking-tight text-gray-900">Hangi şarkıyı çalmak istersin?</h1>
-        <div className="relative mx-auto max-w-xl">
+        <h1 className="mb-6 text-3xl font-black tracking-tight text-stone-900 sm:mb-8 sm:text-5xl">Hangi şarkıyı çalmak istersin?</h1>
+        <div className="relative mx-auto max-w-2xl">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={22} />
           <input
             type="text"
             placeholder="Şarkı veya sanatçı ara..."
-            className="w-full rounded-2xl border border-gray-100 bg-white py-4 pr-14 pl-14 text-lg shadow-sm outline-none transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-50"
+            className="w-full rounded-2xl border-4 border-stone-900 bg-[#fff3c7] py-3 pr-12 pl-12 text-base font-bold text-stone-800 shadow-[6px_6px_0_#1c1917] outline-none transition-all focus:-translate-y-0.5 focus:bg-white focus:ring-0 sm:py-4 sm:pr-14 sm:pl-14 sm:text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -404,7 +404,7 @@ export default function Home() {
       </div>
 
       {!trimmedSearch && (
-        <div className="mb-10 grid gap-4 md:grid-cols-2">
+        <div className="mb-8 grid gap-4 md:mb-10 md:grid-cols-2">
           <MiniSongList
             title="Favorilerim"
             icon={<Heart size={20} />}
@@ -420,7 +420,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="mb-5 flex flex-col gap-4">
+      <div className="mb-5 flex flex-col gap-4 rounded-3xl border-2 border-stone-800 bg-[#ffe7a8] p-3 shadow-[4px_4px_0_#1c1917]">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-black text-gray-900">{trimmedSearch ? 'Arama sonuçları' : 'Popüler akorlar'}</h2>
@@ -438,7 +438,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-3xl bg-white p-2 shadow-sm">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl border-2 border-stone-900 bg-[#fffaf0] p-2">
           {RESULT_TABS.map((tab) => {
             const count = tab.id === 'songs' ? songs.length : artists.length;
             const Icon = tab.id === 'songs' ? Music : Users;
@@ -447,7 +447,7 @@ export default function Home() {
                 type="button"
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-colors ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}
+                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-colors ${activeTab === tab.id ? 'bg-stone-900 text-amber-100' : 'text-stone-700 hover:bg-amber-200 hover:text-stone-900'}`}
               >
                 <Icon size={18} />
                 {tab.label}
@@ -467,7 +467,7 @@ export default function Home() {
       {loading ? (
         <LoadingGrid />
       ) : activeTab === 'songs' ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
           {songs.map((song, index) => (
             <SongCard
               key={song.id || song.slug}
@@ -480,13 +480,13 @@ export default function Home() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
           {artists.map((artist) => <ArtistCard key={artist.id || artist.slug} artist={artist} />)}
         </div>
       )}
 
       {!loading && activeResults.length === 0 && !errorMessage && (
-        <div className="rounded-[2rem] border border-dashed border-blue-200 bg-white p-10 text-center">
+        <div className="rounded-[2rem] border-4 border-dashed border-stone-700 bg-[#fff4cf] p-6 text-center shadow-[4px_4px_0_#1c1917] sm:p-10">
           <h3 className="mb-2 text-2xl font-black text-gray-800">
             {hasAnyResults ? `${activeTab === 'songs' ? 'Şarkı' : 'Sanatçı'} sonucu yok.` : 'Sonuç bulamadık.'}
           </h3>
