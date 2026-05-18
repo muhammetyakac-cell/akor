@@ -1,4 +1,4 @@
-const BRAND_NAME = 'TınıAkor';
+const BRAND_NAME = 'AkorCenneti';
 const DEFAULT_TITLE = `${BRAND_NAME} | Türkçe şarkı akorları`;
 const DEFAULT_DESCRIPTION = 'Türkçe şarkı akorlarını bulun, kolay transpoze edin ve çalma moduyla pratik yapın.';
 

@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/react';
 import Home from './pages/Home';
 import Artists from './pages/Artists';
 import ArtistDetail from './pages/ArtistDetail';
@@ -29,9 +28,7 @@ function App() {
             <Route path="/song/:slug" element={<SongDetail />} />
           </Routes>
         </main>
-        <SpeedInsights />
       </div>
-      <Analytics />
     </Router>
   );
 }
