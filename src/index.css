@@ -43,3 +43,62 @@ html {
   scrollbar-width: auto;
   scrollbar-color: #1c66de #e5e9ee;
 }
+
+
+:root {
+  --retro-bg: radial-gradient(circle at 15% 15%, #fff2cf 0%, #ffe8ba 36%, #ffdca0 100%);
+  --retro-ink: #2f2210;
+  --retro-frame: #2c1f0d;
+}
+
+body {
+  background: repeating-linear-gradient(0deg, rgba(102,69,31,.04), rgba(102,69,31,.04) 1px, transparent 1px, transparent 5px), var(--retro-bg);
+  color: var(--retro-ink);
+}
+
+.retro-shell {
+  background: transparent;
+}
+.retro-nav {
+  background: rgba(255, 245, 219, 0.88);
+  backdrop-filter: saturate(120%) blur(6px);
+  border-bottom: 3px solid var(--retro-frame);
+}
+.retro-nav-inner {
+  position: relative;
+}
+.retro-brand {
+  text-shadow: 2px 2px 0 #ffcf70;
+}
+.retro-link {
+  border: 2px dashed #6f4a15;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: #ffefc9;
+}
+.retro-page .retro-pill {
+  background: #231a0f;
+  color: #ffe7a8;
+  border: 2px solid #ffd88a;
+}
+.retro-input {
+  border: 2px solid #4a3115;
+  background: #fff8e7;
+  box-shadow: 4px 4px 0 #d7ab56;
+}
+.retro-input:focus { box-shadow: 0 0 0 4px #ffe0a3; }
+.retro-panel, .retro-card, .retro-tabs {
+  background: #fff8e6;
+  border-color: #4a3115 !important;
+  box-shadow: 6px 6px 0 rgba(74,49,21,.22);
+}
+.retro-tab-active {
+  background: linear-gradient(135deg, #6e4712, #4a2e0f);
+}
+
+@media (max-width: 640px) {
+  .retro-nav { border-bottom-width: 2px; }
+  .retro-link { letter-spacing: .18em; }
+  ::-webkit-scrollbar { width: 14px; }
+  ::-webkit-scrollbar-thumb { border-width: 4px; }
+}

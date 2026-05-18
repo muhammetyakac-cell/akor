@@ -9,19 +9,19 @@ import { BRAND_NAME } from './lib/seo';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#f5f9ff] text-gray-900 font-sans selection:bg-blue-200/50">
-        <nav className="bg-white/70 backdrop-blur-xl border-b border-blue-100/50 sticky top-0 z-50">
-          <div className="max-w-4xl mx-auto px-4 h-16 flex justify-between items-center">
-            <Link to="/" className="text-2xl font-black tracking-tighter hover:text-blue-600 transition-all">
+      <div className="retro-shell min-h-screen text-gray-900 selection:bg-amber-300/60">
+        <nav className="retro-nav sticky top-0 z-50">
+          <div className="retro-nav-inner max-w-4xl mx-auto px-4 h-16 flex justify-between items-center">
+            <Link to="/" className="text-2xl font-black tracking-tight transition-all retro-brand">
               {BRAND_NAME}
             </Link>
-            <Link to="/artists" className="text-[20px] font-black tracking-[0.3em] text-blue-400/80 hover:text-blue-600 transition-all uppercase">
+            <Link to="/artists" className="text-sm sm:text-base font-black tracking-[0.22em] text-amber-900 transition-all uppercase retro-link">
               Sanatçılar
             </Link>
           </div>
         </nav>
 
-        <main className="max-w-4xl mx-auto px-4 py-10">
+        <main className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-10">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/artists" element={<Artists />} />
