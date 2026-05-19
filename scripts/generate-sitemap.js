@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
 
-const siteUrl = (process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://tiniakor.com').replace(/\/$/, '');
+const siteUrl = (process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://akorcennetim.com.tr').replace(/\/$/, '');
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
@@ -25,7 +25,7 @@ const fetchRoutes = async () => {
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
   const [{ data: songs, error: songsError }, { data: artists, error: artistsError }] = await Promise.all([
-    supabase.from('songs').select('slug').not('slug', 'is', null),
+    supabase.from('songs').select('id, slug').not('slug', 'is', null),
     supabase.from('artists').select('slug').not('slug', 'is', null),
   ]);
 
@@ -34,7 +34,9 @@ const fetchRoutes = async () => {
   }
 
   return {
-    songRoutes: (songs || []).map((song) => `/song/${song.slug}`),
+    songRoutes: (songs || [])
+      .filter((song) => song?.slug && song?.id)
+      .map((song) => `/song/${song.slug}--${song.id}`),
     artistRoutes: (artists || []).map((artist) => `/artist/${artist.slug}`),
   };
 };
