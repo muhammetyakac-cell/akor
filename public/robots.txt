@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://tiniakor.com/sitemap.xml
+Sitemap: https://akorcennetim.com.tr/sitemap.xml

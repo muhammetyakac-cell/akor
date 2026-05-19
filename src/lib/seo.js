@@ -27,6 +27,20 @@ const upsertCanonical = (url) => {
   element.setAttribute('href', url);
 };
 
+const upsertHrefLang = (url, lang = 'tr-TR') => {
+  const selector = `link[rel="alternate"][hreflang="${lang}"]`;
+  let element = document.head.querySelector(selector);
+
+  if (!element) {
+    element = document.createElement('link');
+    element.setAttribute('rel', 'alternate');
+    element.setAttribute('hreflang', lang);
+    document.head.appendChild(element);
+  }
+
+  element.setAttribute('href', url);
+};
+
 const upsertStructuredData = (structuredData) => {
   const selector = 'script[type="application/ld+json"][data-seo-structured-data="true"]';
   let element = document.head.querySelector(selector);
@@ -61,11 +75,15 @@ export const setPageSeo = ({
   upsertMeta('meta[property="og:title"]', { property: 'og:title', content: title });
   upsertMeta('meta[property="og:description"]', { property: 'og:description', content: description });
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: ogType });
+  upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'tr_TR' });
   upsertMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl });
-  upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary' });
+  upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
   upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: title });
   upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: description });
+  upsertMeta('meta[name="robots"]', { name: 'robots', content: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' });
   upsertCanonical(canonicalUrl);
+  upsertHrefLang(canonicalUrl, 'tr-TR');
+  upsertHrefLang(canonicalUrl, 'x-default');
   upsertStructuredData(structuredData);
 };
 

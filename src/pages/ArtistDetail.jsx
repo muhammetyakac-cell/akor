@@ -66,7 +66,7 @@ export default function ArtistDetail() {
         {songs.map(song => (
           <Link 
             key={song.id} 
-            to={`/song/${song.slug}`}
+            to={`/song/${song.slug}--${song.id}`}
             className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-blue-300 hover:shadow-md transition-all group"
           >
             <div className="flex items-center gap-4">

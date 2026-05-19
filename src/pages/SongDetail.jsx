@@ -6,6 +6,14 @@ import { ArrowLeft } from 'lucide-react';
 import { BRAND_NAME, setPageSeo } from '../lib/seo';
 
 const RECENT_KEY = 'akor:recentSongs';
+const parseSongRef = (songRef = '') => {
+  const markerIndex = songRef.lastIndexOf('--');
+  if (markerIndex === -1) return { slug: songRef, id: null };
+
+  const slug = songRef.slice(0, markerIndex);
+  const id = Number(songRef.slice(markerIndex + 2));
+  return { slug, id: Number.isFinite(id) ? id : null };
+};
 
 const getRecentSongs = () => {
   const rawRecentSongs = window.localStorage.getItem(RECENT_KEY);
@@ -20,7 +28,7 @@ const getRecentSongs = () => {
 };
 
 export default function SongDetail() {
-  const { slug } = useParams();
+  const { slug: songRef } = useParams();
   const [songData, setSongData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,11 +39,12 @@ export default function SongDetail() {
       setLoading(true);
 
       try {
-        const { data: song, error: songError } = await supabase
+        const { slug, id } = parseSongRef(songRef);
+        const baseQuery = supabase
           .from('songs')
-          .select('id, title, slug, artists(name)')
-          .eq('slug', slug)
-          .single();
+          .select('id, title, slug, artists(name)');
+        const songQuery = id ? baseQuery.eq('id', id) : baseQuery.eq('slug', slug);
+        const { data: song, error: songError } = await songQuery.single();
 
         if (songError) throw songError;
 
@@ -57,13 +66,13 @@ export default function SongDetail() {
         setPageSeo({
           title: `${nextSongData.title} Akorları - ${nextSongData.artist} | ${BRAND_NAME}`,
           description: `${nextSongData.title} akorları, ${nextSongData.artist} akorları, kolay transpoze ve çalma modu ile gitar pratiği.`,
-          canonicalPath: `/song/${nextSongData.slug}`,
+          canonicalPath: `/song/${nextSongData.slug}--${song.id}`,
           ogType: 'music.song',
           structuredData: {
             '@context': 'https://schema.org',
             '@type': 'MusicComposition',
             name: nextSongData.title,
-            url: `${window.location.origin}/song/${nextSongData.slug}`,
+            url: `${window.location.origin}/song/${nextSongData.slug}--${song.id}`,
             inLanguage: 'tr',
             isAccessibleForFree: true,
             byArtist: {
@@ -77,7 +86,7 @@ export default function SongDetail() {
           setSongData(nextSongData);
         }
 
-        const recentPayload = { slug: song.slug, title: song.title, artist: song.artists.name };
+        const recentPayload = { slug: song.slug, id: song.id, path: `/song/${song.slug}--${song.id}`, title: song.title, artist: song.artists.name };
         const nextRecentSongs = [
           recentPayload,
           ...getRecentSongs().filter((recentSong) => recentSong.slug !== song.slug)
@@ -92,7 +101,7 @@ export default function SongDetail() {
         setPageSeo({
           title: `Şarkı bulunamadı | ${BRAND_NAME}`,
           description: 'Aradığın şarkı akoru bulunamadı. Ana sayfadan başka bir şarkı veya sanatçı arayabilirsin.',
-          canonicalPath: `/song/${slug}`,
+          canonicalPath: `/song/${songRef}`,
         });
         if (isMounted) {
           setSongData(null);
@@ -109,7 +118,7 @@ export default function SongDetail() {
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [songRef]);
 
   if (loading) {
     return (
