@@ -25,6 +25,11 @@ const getStoredSongs = (key) => {
 };
 
 const getSongArtist = (song) => song.artists?.name || song.artist || 'Bilinmeyen sanatçı';
+const getSongPath = (song) => {
+  if (song?.path) return song.path;
+  if (song?.id) return `/song/${song.slug}--${song.id}`;
+  return `/song/${song.slug}`;
+};
 
 const saveLocalRequest = (request) => {
   const previousRequests = getStoredSongs(REQUESTS_KEY);
@@ -38,7 +43,7 @@ function SongCard({ song, index, colorSchemes, favoriteSongs, onToggleFavorite }
   return (
     <div className="relative h-full">
       <Link
-        to={`/song/${song.slug}`}
+        to={getSongPath(song)}
         className={`
           ${scheme.bg} ${scheme.border} ${scheme.hover}
           flex aspect-square flex-col items-center justify-center rounded-[2rem] border p-6 text-center
@@ -93,7 +98,7 @@ function MiniSongList({ title, icon, items, emptyText }) {
       {items.length > 0 ? (
         <div className="grid gap-2">
           {items.slice(0, 4).map((song) => (
-            <Link key={song.slug} to={`/song/${song.slug}`} className="flex items-center justify-between rounded-2xl border-2 border-stone-200 bg-[#fff8df] px-4 py-3 transition-colors hover:bg-pink-100">
+            <Link key={song.slug} to={getSongPath(song)} className="flex items-center justify-between rounded-2xl border-2 border-stone-200 bg-[#fff8df] px-4 py-3 transition-colors hover:bg-pink-100">
               <div>
                 <p className="font-black text-stone-800">{song.title}</p>
                 <p className="text-sm font-medium text-gray-400">{song.artist}</p>
@@ -340,6 +345,8 @@ export default function Home() {
     const exists = favoriteSongs.some((favorite) => favorite.slug === song.slug);
     const payload = {
       slug: song.slug,
+      id: song.id,
+      path: getSongPath(song),
       title: song.title,
       artist: getSongArtist(song),
     };
