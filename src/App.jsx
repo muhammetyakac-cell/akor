@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Artists from './pages/Artists';
 import ArtistDetail from './pages/ArtistDetail';
 import SongDetail from './pages/SongDetail';
+import AdminPanel from './pages/AdminPanel';
 import { BRAND_NAME } from './lib/seo';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="/artists" element={<Artists />} />
             <Route path="/artist/:slug" element={<ArtistDetail />} />
             <Route path="/song/:slug" element={<SongDetail />} />
+            <Route path="/mami" element={<AdminPanel />} />
           </Routes>
         </main>
       </div>
